@@ -61,6 +61,7 @@ $(document).ready(function() {
 
     loadProcesses();
     setupSearchListener();
+    setupDependentDropdowns();
 });
 
 /**
@@ -249,6 +250,77 @@ function setupSearchListener() {
 }
 
 /**
+ * Setup dependent dropdown listeners
+ * When "Цель обработки ПДн" changes, filter "Микроцель обработки ПДн"
+ */
+function setupDependentDropdowns() {
+    $(document).on('change', '#processPurpose', function() {
+        filterMicroPurposeByPurpose();
+    });
+}
+
+/**
+ * Filter "Микроцель обработки ПДн" based on selected "Цель обработки ПДн"
+ */
+function filterMicroPurposeByPurpose() {
+    const purposeSelect = $('#processPurpose');
+    const microPurposeSelect = $('#processMicroPurpose');
+    const selectedPurposeId = purposeSelect.val();
+    const currentMicroPurposeValue = microPurposeSelect.val();
+
+    // Get all micro-purposes from references
+    const allMicroPurposes = references['Микроцель обработки ПДн'] || [];
+
+    // Clear and repopulate micro-purpose select
+    microPurposeSelect.empty();
+    microPurposeSelect.append('<option value="">— Выберите —</option>');
+
+    if (!selectedPurposeId) {
+        // No purpose selected - show all micro-purposes
+        allMicroPurposes.forEach(function(item) {
+            const idField = getIdField(item);
+            const valueField = getValueField(item);
+            if (idField && valueField) {
+                microPurposeSelect.append('<option value="' + item[idField] + '">' + escapeHtml(item[valueField]) + '</option>');
+            }
+        });
+    } else {
+        // Get the text value of the selected purpose
+        const purposeData = references['Цель обработки ПДн'] || [];
+        const selectedPurpose = purposeData.find(function(p) {
+            const idField = getIdField(p);
+            return p[idField] == selectedPurposeId;
+        });
+
+        if (selectedPurpose) {
+            const purposeTextField = getValueField(selectedPurpose);
+            const purposeText = selectedPurpose[purposeTextField];
+
+            // Filter micro-purposes by matching "Цель обработки ПДн" field
+            const filteredMicroPurposes = allMicroPurposes.filter(function(item) {
+                return item['Цель обработки ПДн'] === purposeText;
+            });
+
+            filteredMicroPurposes.forEach(function(item) {
+                const idField = getIdField(item);
+                const valueField = getValueField(item);
+                if (idField && valueField) {
+                    microPurposeSelect.append('<option value="' + item[idField] + '">' + escapeHtml(item[valueField]) + '</option>');
+                }
+            });
+        }
+    }
+
+    // Try to restore previous value if it's still valid
+    if (currentMicroPurposeValue) {
+        const optionExists = microPurposeSelect.find('option[value="' + currentMicroPurposeValue + '"]').length > 0;
+        if (optionExists) {
+            microPurposeSelect.val(currentMicroPurposeValue);
+        }
+    }
+}
+
+/**
  * Perform search across all fields
  */
 function performSearch() {
@@ -324,7 +396,10 @@ function fillFormWithProcess(process) {
     $('#processProduct').val(process['Продукт'] || '');
     $('#processService').val(process['Сервис'] || '');
     $('#processIS').val(process['ИС'] || '');
+
+    // Set purpose first, then filter micro-purposes, then set micro-purpose value
     $('#processPurpose').val(process['Цель обработки ПДн'] || '');
+    filterMicroPurposeByPurpose();
     $('#processMicroPurpose').val(process['Микроцель обработки ПДн'] || '');
 
     // Handle multiselect for categories
