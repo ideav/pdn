@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, nextTick } from 'vue';
 import ProcessCard from './ProcessCard.vue';
 
 const props = defineProps({
@@ -75,6 +75,13 @@ const visiblePages = computed(() => {
 function goToPage(page) {
   if (page !== '...' && page >= 1 && page <= totalPages.value) {
     currentPage.value = page;
+    // Scroll cards grid into view after page change
+    nextTick(() => {
+      const cardsGrid = document.querySelector('.cards-grid');
+      if (cardsGrid) {
+        cardsGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
   }
 }
 
@@ -160,12 +167,11 @@ function onSearch() {
   display: flex;
   gap: 16px;
   align-items: center;
-  flex-wrap: wrap;
 }
 
 .search-box {
   flex: 1;
-  min-width: 200px;
+  min-width: 0;
 }
 
 .search-input {
