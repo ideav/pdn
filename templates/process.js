@@ -857,7 +857,7 @@ function renderTabData(tabName, items, processId) {
     // Determine columns (exclude ID columns)
     const firstItem = items[0];
     const columns = Object.keys(firstItem).filter(key => !key.endsWith('ID'));
-    const displayMode = columns.length < 3 ? 'table' : 'cards';
+    const displayMode = columns.length <= 3 ? 'table' : 'cards';
 
     // Reset state
     tabPaginationState[tabName].page = 1;
@@ -1035,7 +1035,7 @@ function filterTabData(tabName, query) {
     const items = state.data;
     const firstItem = items[0];
     const columns = Object.keys(firstItem).filter(key => !key.endsWith('ID'));
-    const displayMode = columns.length < 3 ? 'table' : 'cards';
+    const displayMode = columns.length <= 3 ? 'table' : 'cards';
 
     let html = '<div class="data-tab-wrapper">';
 
