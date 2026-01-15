@@ -11,6 +11,7 @@ const itemsPerPage = 20;
 let references = {};
 let editingProcessId = null;
 let referencesLoaded = false;
+let processStats = {}; // Stores ПДн and Экспертиза counts for each process
 
 // Tab data state
 let tabDataCache = {};
@@ -116,10 +117,12 @@ function loadProcesses() {
         success: function(data) {
             allProcesses = data || [];
             filteredProcesses = allProcesses;
-            // Load references before first rendering of cards
+            // Load references and statistics before first rendering of cards
             loadReferencesIfNeeded(function() {
-                renderProcesses();
-                hideLoadingState();
+                loadProcessStatistics(function() {
+                    renderProcesses();
+                    hideLoadingState();
+                });
             });
         },
         error: function(xhr, status, error) {
@@ -128,6 +131,64 @@ function loadProcesses() {
             hideLoadingState();
             $('#emptyState').show();
         }
+    });
+}
+
+/**
+ * Load statistics (ПДн and Экспертиза counts) for all processes
+ */
+function loadProcessStatistics(callback) {
+    // Load both ПДн and Экспертиза data for all processes
+    const pdnPromise = $.ajax({
+        url: '/' + db + '/report/proc%20ПДн?JSON_KV',
+        method: 'GET',
+        dataType: 'json'
+    }).then(function(data) {
+        return { type: 'pdn', data: data || [] };
+    }).catch(function() {
+        return { type: 'pdn', data: [] };
+    });
+
+    const expertisePromise = $.ajax({
+        url: '/' + db + '/report/proc%20Экспертиза?JSON_KV',
+        method: 'GET',
+        dataType: 'json'
+    }).then(function(data) {
+        return { type: 'expertise', data: data || [] };
+    }).catch(function() {
+        return { type: 'expertise', data: [] };
+    });
+
+    Promise.all([pdnPromise, expertisePromise]).then(function(results) {
+        // Initialize stats object
+        processStats = {};
+
+        // Count ПДн items per process
+        results.forEach(function(result) {
+            if (result.type === 'pdn') {
+                result.data.forEach(function(item) {
+                    const processId = item['ПроцессID'];
+                    if (processId) {
+                        if (!processStats[processId]) {
+                            processStats[processId] = { pdn: 0, expertise: 0 };
+                        }
+                        processStats[processId].pdn++;
+                    }
+                });
+            } else if (result.type === 'expertise') {
+                result.data.forEach(function(item) {
+                    const processId = item['ПроцессID'];
+                    if (processId) {
+                        if (!processStats[processId]) {
+                            processStats[processId] = { pdn: 0, expertise: 0 };
+                        }
+                        processStats[processId].expertise++;
+                    }
+                });
+            }
+        });
+
+        callback();
     });
 }
 
@@ -206,6 +267,12 @@ function renderProcesses() {
             card.querySelector('.process-date').textContent = creationDate;
             card.querySelector('.process-creator').textContent = creatorName;
         }
+
+        // Set statistics badges
+        const processId = process['ПроцессID'];
+        const stats = processStats[processId] || { pdn: 0, expertise: 0 };
+        card.querySelector('.process-pdn-count').textContent = stats.pdn;
+        card.querySelector('.process-expertise-count').textContent = stats.expertise;
 
         grid.append(card);
     });
