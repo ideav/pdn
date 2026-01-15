@@ -1,5 +1,19 @@
-# Vue 3 + Vite
+# PDN - Процессы обработки персональных данных
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+Система для управления процессами обработки персональных данных (ПДн).
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+## Описание
+
+Проект использует конструктор Integram для создания интерфейса управления процессами обработки ПДн.
+
+## Структура проекта
+
+- `templates/` - HTML-шаблоны для конструктора Integram
+  - `main.html` - главный шаблон страницы
+  - `process.html` - шаблон для отображения процессов
+  - `process.css` - стили для интерфейса процессов
+  - `process.js` - JavaScript-логика для работы с процессами
+
+## Развертывание
+
+Файлы из директории `templates/` используются в конструкторе Integram для создания интерфейса приложения.
